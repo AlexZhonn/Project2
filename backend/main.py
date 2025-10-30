@@ -25,3 +25,9 @@ def get_docs():
 def get_data():
     return load_colleges()
 
+
+@app.post("/colleges/path")
+def get_path(data):
+    pass
+    
+
