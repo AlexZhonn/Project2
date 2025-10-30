@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>College Visit Planner</title>
+    <link rel="stylesheet" href="landing.css" />
+  </head>
+  <body>
+    <div class="landing-container">
+      <div class="overlay"></div>
+      <div class="content">
+        <h1>College Visit Planner</h1>
+        <p>
+          Plan your college trip across the U.S. using <b>Dijkstra</b> or
+          <b>A*</b> algorithms.
+        </p>
+        <button id="enter-btn">Enter the Map</button>
+      </div>
+    </div>
+
+    <script>
+      document.getElementById("enter-btn").addEventListener("click", () => {
+        window.location.href = "map.html";
+      });
+    </script>
+  </body>
+</html>
