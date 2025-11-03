@@ -11,18 +11,21 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors",
 }).addTo(map);
 
-//config for user Selection
-let startMarker = null; // start mark
-let endMarker = null; //end mark
-let line = null; // vitualization of two colleges
-let startCollege = null; //start college
-let endCollege = null; // end college
-let algorithm = null; // algorithm
+let startMarker = null;
+let endMarker = null;
+let startCollege = null;
+let endCollege = null;
+let edgeLayers = [];
+let edgesVisible = true;
+let colleges = [];
 
 async function fetchData() {
-  const res = await fetch("http://127.0.0.1:8000/data");
-  const colleges = await res.json();
+  const res_colleges = await fetch("http://127.0.0.1:8000/data");
+  const res_edges = await fetch("http://127.0.0.1:8000/colleges/edges");
+  colleges = await res_colleges.json();
+  const edges = await res_edges.json();
   drawMarkers(colleges);
+  drawEdges(edges, colleges);
 }
 
 function drawMarkers(colleges) {
@@ -35,98 +38,164 @@ function drawMarkers(colleges) {
       weight: 1,
       fillOpacity: 0.8,
     }).addTo(map);
-
     marker.on("click", () => handleMarkerClick(marker, c));
-
     marker.bindTooltip(`<b>${c.name}</b><br>${c.city}, ${c.state}`, {
       direction: "top",
     });
   });
 }
 
+function drawEdges(edges, colleges) {
+  const coordMap = {};
+  colleges.forEach((c) => (coordMap[c.name] = [c.lat, c.lon]));
+  const drawn = new Set();
+  Object.entries(edges).forEach(([college, neighbors]) => {
+    const src = coordMap[college];
+    if (!src) return;
+    neighbors.forEach(([dist, neighbor]) => {
+      const dest = coordMap[neighbor];
+      if (!dest) return;
+      const key = [college, neighbor].sort().join("-");
+      if (drawn.has(key)) return;
+      drawn.add(key);
+      const line = L.polyline([src, dest], {
+        color: "gray",
+        weight: 1,
+        opacity: 0.3,
+      }).addTo(map);
+      edgeLayers.push(line);
+    });
+  });
+}
+
+document.getElementById("hide").addEventListener("click", () => {
+  if (edgesVisible) {
+    edgeLayers.forEach((l) => map.removeLayer(l));
+    edgesVisible = false;
+    document.getElementById("hide").innerText = "Show Edges";
+  } else {
+    edgeLayers.forEach((l) => l.addTo(map));
+    edgesVisible = true;
+    document.getElementById("hide").innerText = "Hide Edges";
+  }
+});
+
 function handleMarkerClick(marker, college) {
   if (!startMarker) {
     startMarker = marker;
     startCollege = college;
     marker.setStyle({ fillColor: "green", radius: 7 });
-    marker.bindPopup(`<b>Start:</b> ${college.name}`).openPopup();
+    document.getElementById("start").value = college.name;
     return;
   }
-
   if (!endMarker) {
     if (college.name === startCollege.name) {
       alert("Start and End cannot be the same!");
       return;
     }
-
     endMarker = marker;
     endCollege = college;
     marker.setStyle({ fillColor: "blue", radius: 7 });
-    marker.bindPopup(`<b>End:</b> ${college.name}`).openPopup();
-
-    const startLatLng = startMarker.getLatLng();
-    const endLatLng = endMarker.getLatLng();
-    line = L.polyline([startLatLng, endLatLng], {
-      color: "yellow",
-      weight: 3,
-      dashArray: "6,6",
-    }).addTo(map);
-
+    document.getElementById("end").value = college.name;
     return;
   }
-
   resetSelection();
 }
 
-function resetSelection() {
-  if (startMarker) startMarker.setStyle({ fillColor: "red", radius: 4 });
-  if (endMarker) endMarker.setStyle({ fillColor: "red", radius: 4 });
-  if (line) map.removeLayer(line);
+document.getElementById("reset").addEventListener("click", () => {
+  map.eachLayer((layer) => {
+    if (
+      layer instanceof L.Polyline &&
+      !(layer instanceof L.CircleMarker) &&
+      !edgeLayers.includes(layer)
+    ) {
+      map.removeLayer(layer);
+    }
+  });
 
+  if (startMarker) startMarker.setStyle({ fillColor: "red", radius: 3 });
+  if (endMarker) endMarker.setStyle({ fillColor: "red", radius: 3 });
   startMarker = null;
   endMarker = null;
   startCollege = null;
   endCollege = null;
-  line = null;
-}
 
-document.getElementById("algorithm").addEventListener("change", (event) => {
-  algorithm = event.target.value;
+  document.getElementById("start").value = "";
+  document.getElementById("end").value = "";
+
+  edgesVisible = true;
+  document.getElementById("hide").innerText = "Hide Edges";
+
+  map.setView([37.8, -96], 5);
 });
 
-async function passCollegeSelection() {
-  //start visualization
-  if (!startMarker || !endMarker) {
-    alert("One or Two of the college is not selected");
+document.getElementById("startBtn").addEventListener("click", async () => {
+  if (!startCollege || !endCollege) {
+    alert("Please select both start and end colleges!");
+    return;
   }
-  const startName = startCollege;
-  const endName = endCollege.name;
 
-  try {
-    const response = await fetch("http://127.0.0.1:8000/colleges/path", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        start: startName,
-        end: endName,
-        algorithm: algorithm,
-      }),
-    });
+  const algo = document.getElementById("algorithm").value;
+  const res = await fetch("http://127.0.0.1:8000/colleges/path", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      algorithm: algo,
+      start: startCollege.name,
+      end: endCollege.name,
+    }),
+  });
 
-    if (!response.ok) {
-      throw new Error("error: " + response.status);
+  const data = await res.json();
+
+  if (data.steps && data.steps.length > 0) {
+    const stepColor = algo === "dfs" ? "orange" : "cyan";
+    const reached = await animateSteps(data.steps, data.end, stepColor, 200);
+    if (reached) {
+      await animatePath(data.path);
+      return;
+    }
+  }
+  await animatePath(data.path);
+});
+
+async function animateSteps(steps, endCoord, color = "orange", delay) {
+  for (let [p1, p2] of steps) {
+    const line = L.polyline([p1, p2], {
+      color: color,
+      weight: 2,
+      opacity: 0.6,
+    }).addTo(map);
+
+    if (p2[0] === endCoord[0] && p2[1] === endCoord[1]) {
+      return true;
     }
 
-    const data = await response.json();
-
-    if (data.path) {
-      L.polyline(data.path, { color: "lime", weight: 4 }).addTo(map);
-    }
-  } catch (err) {
-    console.error("Error for fetching", err);
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
+  return false;
+}
+
+async function animatePath(pathCoords) {
+  if (!pathCoords || pathCoords.length < 2) return;
+
+  for (let i = 0; i < pathCoords.length - 1; i++) {
+    const segment = [pathCoords[i], pathCoords[i + 1]];
+    L.polyline(segment, {
+      color: "red",
+      weight: 5,
+      opacity: 0.8,
+    }).addTo(map);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+
+  const pathLine = L.polyline(pathCoords, {
+    color: "red",
+    weight: 5,
+    opacity: 1,
+  }).addTo(map);
+
+  map.fitBounds(pathLine.getBounds());
 }
 
 fetchData();

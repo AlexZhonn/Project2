@@ -19,43 +19,36 @@
       <div id="bar2" class="bars"></div>
       <div id="bar3" class="bars"></div>
     </label>
+
     <section class="tab">
-      <div class="text-white">🎓 College Visit Planner</div>
-      <label class="text-white" for="form-control"
-        >Select Your Start Point and End Point</label
-      >
-      <label class="text-white grey" for="form-control">
-        You may click the dot on the map
-      </label>
+      <h1 class="title">🎓 College Visit Planner</h1>
+      <p class="subtitle">Select your start and end points on the map</p>
+
       <div class="container">
         <div class="form-control">
-          <input type="value" required="" />
-          <label>
-            <span style="transition-delay: 0ms">S</span
-            ><span style="transition-delay: 50ms">T</span
-            ><span style="transition-delay: 100ms">A</span
-            ><span style="transition-delay: 150ms">R</span
-            ><span style="transition-delay: 200ms">T</span>
-          </label>
+          <input type="text" id="start" readonly />
+          <label>Start</label>
         </div>
         <div class="form-control">
-          <input type="value" required="" />
-          <label>
-            <span style="transition-delay: 0ms">E</span
-            ><span style="transition-delay: 50ms">N</span
-            ><span style="transition-delay: 100ms">D</span>
-          </label>
+          <input type="text" id="end" readonly />
+          <label>End</label>
         </div>
       </div>
 
-      <label class="text-white" for="algorithm">Select Algorithm:</label>
+      <label for="algorithm" class="label">Select Algorithm:</label>
       <select id="algorithm">
-        <option value="dijkstra" selected>Dijkstra</option>
-        <option value="astar">A*</option>
+        <option value="bfs">BFS (Ripple)</option>
+        <option value="dfs">DFS (Depth Explore)</option>
+        <option value="dijkstra" selected>Dijkstra (Shortest Path)</option>
       </select>
 
-      <button id="startBtn">Start Visualization</button>
+      <div class="btn-group">
+        <button id="startBtn">Start Visualization</button>
+        <button id="hide">Hide Edges</button>
+        <button id="reset">Reset</button>
+      </div>
     </section>
+
     <div id="map"></div>
 
     <script
@@ -63,7 +56,6 @@
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
-
     <script src="script.js"></script>
   </body>
 </html>

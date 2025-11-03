@@ -1,12 +1,181 @@
-#develop two algorithms to find the minimum distance.
-def dijkstra(colleges: []):
-    pass
+from collections import defaultdict, deque
+import math, heapq
 
-def astar(colleges: int):
-    pass
+def constructAdj(edges): #construct the adjancent list for future dfs and bfs algorithm.
+    adj = defaultdict(list)
+    for u, neighbors in edges.items(): 
+        for dist, v in neighbors:
+            adj[u].append((v, dist))
+            adj[v].append((u, dist))
+    return adj
+
+def dijkstra(src, adj, end):
+    pq = [] #pq for relaxation
+    dist = defaultdict(lambda: float('inf')) #initiate the dist for all nodes and set them all to infinity, except the src being 0.
+    parent = {} #track the visited nodes we traversed
+    dist[src] = 0
+    heapq.heappush(pq, (0, src))
+    while pq:
+        d, u = heapq.heappop(pq)
+        if u == end:
+            break
+        for v, weight in adj[u]: #relaxation
+            if dist[v] > d + weight:
+                dist[v] = d + weight
+                parent[v] = u
+                heapq.heappush(pq, (dist[v], v))
+    if end not in parent and end != src: #if the end could not be found
+        return [], float('inf')
+    path = [end] 
+    while path[-1] in parent:
+        path.append(parent[path[-1]]) #iterative adding nodes we visited through the path.
+    path.reverse()
+    return path, dist[end]
+
+def bfs_path(adj, start, end):
+    visited = set([start]) # visited set for preventing revisit action.
+    q = deque([start])
+    parent = {}
+    while q:
+        u = q.popleft()
+        if u == end:
+            break
+        for v, _ in adj[u]:
+            if v not in visited:
+                visited.add(v)
+                parent[v] = u
+                q.append(v)
+    if end not in parent and end != start:
+        return [], float('inf')
+    path = [end]
+    while path[-1] in parent:
+        path.append(parent[path[-1]])
+    path.reverse()
+    return path, len(path)
+
+def dfs_path(adj, start, end):
+    visited = set()
+    parent = {}
+    stack = [start]
+    found = False
+
+    while stack:
+        u = stack.pop()
+        if u in visited:
+            continue
+        visited.add(u)
+
+        if u == end:
+            found = True
+            break
+
+        for v, _ in reversed(adj[u]): #since it is iterative, the order will be reversed
+            if v not in visited:
+                parent[v] = u
+                stack.append(v)
+
+    if not found:
+        return [], -1
+
+    path = [end]
+    while path[-1] in parent:
+        path.append(parent[path[-1]])
+    path.reverse()
+    return path, len(path)
 
 
-def setUpEdges(colleges):
-    #TODO: find the schools close to the school itself in state and get the schools out of state.
-    edges = []
+def haversine(lat1, lon1, lat2, lon2): #cited from https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
+    R = 6372.8
+    dLat = math.radians(lat2 - lat1)
+    dLon = math.radians(lon2 - lon1)
+    lat1 = math.radians(lat1)
+    lat2 = math.radians(lat2)
+    a = math.sin(dLat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dLon/2)**2
+    c = 2*math.asin(math.sqrt(a))
+    return R * c
+
+def build_edges(colleges, k_in_state=3):
+    by_state = defaultdict(list)
+    for c in colleges:
+        by_state[c["state"]].append(c)
+    edges = defaultdict(list)
+    for c in colleges:
+        lat, lon, state, name = c["lat"], c["lon"], c["state"], c["name"]
+        same_state = by_state[state]
+        distances = []
+        for other in same_state:
+            if other["name"] == name:
+                continue
+            dist = haversine(lat, lon, other["lat"], other["lon"])
+            distances.append((dist, other["name"]))
+        distances.sort(key=lambda x: x[0])
+        nearest_state = distances[:k_in_state]
+        nearest_cross = None
+        min_cross = float("inf")
+        for other in colleges:
+            if other["state"] == state:
+                continue
+            dist = haversine(lat, lon, other["lat"], other["lon"])
+            if dist < min_cross:
+                min_cross = dist
+                nearest_cross = (dist, other["name"])
+        edges[name] = nearest_state + ([nearest_cross] if nearest_cross else [])
+    return edges
+
+
+# algorithm belows are specifically for animation on web
+def bfs_steps(adj, start, end):
+    visited = set([start])
+    q = deque([start])
+    parent = {}
+    steps = []  
+    while q:
+        u = q.popleft()
+        for v, _ in adj[u]:
+            if v not in visited:
+                visited.add(v)
+                parent[v] = u
+                q.append(v)
+                steps.append((u, v))  
+            if v == end:
+                break
+    path = [end]
+    while path[-1] in parent:
+        path.append(parent[path[-1]])
+    path.reverse()
+    return path, steps
+
+
+def dfs_steps(adj, start, end):
+    visited = set()
+    parent = {}
+    steps = []
+    found = False
+
+    stack = [start]
+    while stack:
+        u = stack.pop()
+        if u in visited:
+            continue
+        visited.add(u)
+
+        if u == end:
+            found = True
+            break
+
+        for v, _ in reversed(adj[u]):
+            if v not in visited:
+                parent[v] = u
+                steps.append((u, v))
+                stack.append(v)
+
+    path = []
+    if found:
+        node = end
+        while node in parent:
+            path.append(node)
+            node = parent[node]
+        path.append(start)
+        path.reverse()
+    return path, steps
 
