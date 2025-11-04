@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fetchData import load_colleges
-from algorithm import dijkstra, bfs_path, dfs_path, constructAdj, build_edges
+from algorithm import dfs_steps, bfs_steps, constructAdj, build_edges
 from collections import defaultdict
 
 app = FastAPI()
@@ -42,15 +42,9 @@ async def get_path(req: Request):
     name_to_coord = {c["name"]: [c["lat"], c["lon"]] for c in colleges}
 
     if algo == "bfs":
-        from algorithm import bfs_steps
         path, steps = bfs_steps(adj, start, end)
-    elif algo == "dfs":
-        from algorithm import dfs_steps
-        path, steps = dfs_steps(adj, start, end)
     else:
-        path, dist = dijkstra(start, adj, end)
-        coords = [name_to_coord[p] for p in path if p in name_to_coord]
-        return {"path": coords, "distance": dist, "steps": []}
+        path, steps = dfs_steps(adj, start, end)
 
     coords = [name_to_coord[p] for p in path if p in name_to_coord]
     steps_coords = []
