@@ -103,30 +103,7 @@ function handleMarkerClick(marker, college) {
 }
 
 document.getElementById("reset").addEventListener("click", () => {
-  map.eachLayer((layer) => {
-    if (
-      layer instanceof L.Polyline &&
-      !(layer instanceof L.CircleMarker) &&
-      !edgeLayers.includes(layer)
-    ) {
-      map.removeLayer(layer);
-    }
-  });
-
-  if (startMarker) startMarker.setStyle({ fillColor: "red", radius: 3 });
-  if (endMarker) endMarker.setStyle({ fillColor: "red", radius: 3 });
-  startMarker = null;
-  endMarker = null;
-  startCollege = null;
-  endCollege = null;
-
-  document.getElementById("start").value = "";
-  document.getElementById("end").value = "";
-
-  edgesVisible = true;
-  document.getElementById("hide").innerText = "Hide Edges";
-
-  map.setView([37.8, -96], 5);
+  window.location.reload();
 });
 
 document.getElementById("startBtn").addEventListener("click", async () => {
@@ -149,7 +126,7 @@ document.getElementById("startBtn").addEventListener("click", async () => {
   const data = await res.json();
 
   if (data.steps && data.steps.length > 0) {
-    const stepColor = algo === "dfs" ? "orange" : "cyan";
+    const stepColor = algo === "dfs" ? "green" : "blue";
     const reached = await animateSteps(data.steps, data.end, stepColor, 200);
     if (reached) {
       await animatePath(data.path);
