@@ -20,10 +20,11 @@ def haversine(lat1, lon1, lat2, lon2): #cited from https://stackoverflow.com/que
     c = 2*math.asin(math.sqrt(a))
     return R * c
 
-def build_edges(colleges, k_in_state=3):
+def build_edges(colleges, k_in_state=3, max_cross_dist=250, max_degree=4):
     by_state = defaultdict(list)
     for c in colleges:
         by_state[c["state"]].append(c)
+    degree = defaultdict(int)
     edges = defaultdict(list)
     for c in colleges:
         lat, lon, state, name = c["lat"], c["lon"], c["state"], c["name"]
@@ -35,17 +36,30 @@ def build_edges(colleges, k_in_state=3):
             dist = haversine(lat, lon, other["lat"], other["lon"])
             distances.append((dist, other["name"]))
         distances.sort(key=lambda x: x[0])
-        nearest_state = distances[:k_in_state]
+        nearest_state = []
+        for d, n in distances:
+            if degree[name] >= max_degree or degree[n] >= max_degree:
+                continue
+            nearest_state.append((d, n))
+            degree[name] += 1
+            degree[n] += 1
+            if len(nearest_state) >= k_in_state:
+                break
         nearest_cross = None
         min_cross = float("inf")
         for other in colleges:
             if other["state"] == state:
                 continue
             dist = haversine(lat, lon, other["lat"], other["lon"])
-            if dist < min_cross:
+            if dist < min_cross and dist < max_cross_dist and degree[other["name"]] < max_degree:
                 min_cross = dist
                 nearest_cross = (dist, other["name"])
-        edges[name] = nearest_state + ([nearest_cross] if nearest_cross else [])
+        if nearest_cross:
+            edges[name] = nearest_state + [nearest_cross]
+            degree[name] += 1
+            degree[nearest_cross[1]] += 1
+        else:
+            edges[name] = nearest_state
     return edges
 
 
