@@ -6,14 +6,12 @@ body {
   margin: 0;
   overflow: hidden;
   font-family: "Poppins", sans-serif;
-  background: radial-gradient(circle at 30% 30%, #0a0a0a, #000);
 }
 
 .landing-container {
   position: relative;
   height: 100vh;
   width: 100%;
-  background: linear-gradient(#833ab4, #fd1d1d, #fcb045);
   background-size: cover;
   background-position: center;
   display: flex;
@@ -29,7 +27,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 1);
   backdrop-filter: blur(4px);
 }
 
@@ -42,7 +40,7 @@ body {
 }
 
 h1 {
-  font-size: 3rem;
+  font-size: 2.5rem;
   letter-spacing: 2px;
   text-transform: uppercase;
   font-weight: 700;
@@ -74,8 +72,8 @@ button {
   font-size: 17px;
   border-radius: 500px;
   overflow: hidden;
-  background: #000000;
-  color: ghostwhite;
+  background: #ffffff;
+  color: rgb(0, 0, 0);
 }
 
 @keyframes glow {
