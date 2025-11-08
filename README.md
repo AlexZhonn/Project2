@@ -9,6 +9,8 @@ bash dev.sh
 ```
 
 #### For Windows:
+#### Prerequisites: 
+##### Install Python 3.10 or later from python.org/downloads
 
 ```bash
 cd backend
