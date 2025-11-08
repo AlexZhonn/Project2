@@ -1,16 +1,15 @@
 # Zhuen Zhong's Project2
+## Using python fastAPI and plain HTML, CSS, Javascript as the technical Stack.
 
-### Using python fastAPI and plain HTML, CSS, Javascript as the technical Stack.
-
-#### For Mac:
+### For Mac:
 
 ```bash
 bash dev.sh
 ```
 
-#### For Windows:
+### For Windows:
 #### Prerequisites: 
-##### Install Python 3.10 or later from python.org/downloads
+* Install Python 3.10 or later from python.org/downloads
 
 ```bash
 cd backend
