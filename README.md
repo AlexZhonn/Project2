@@ -16,7 +16,7 @@ python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 
-start uvicorn main:app --reload
+uvicorn main:app --reload
 
 cd ..\frontend
 start index.html
